@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Molongski Proposal Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0A0A0F;
+      --surface: #12121A;
+      --card: #1A1A26;
+      --border: #2A2A40;
+      --accent: #6C63FF;
+      --green: #06D6A0;
+      --red: #EF476F;
+      --orange: #FF9F1C;
+      --gold: #FFD166;
+      --text: #E8E8F0;
+      --muted: #8888AA;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      line-height: 1.6;
+    }
+
+    .app {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    /* API Key */
+    .api-key-section {
+      margin-bottom: 20px;
+    }
+
+    .api-key-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .api-key-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .api-key-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .api-key-input:focus { border-color: var(--accent); }
+
+    .api-key-save {
+      padding: 10px 20px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .api-key-save:hover { background: rgba(108, 99, 255, 0.1); }
+
+    .api-key-status {
+      font-size: 12px;
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .api-key-status.saved { color: var(--green); }
+    .api-key-status.missing { color: var(--orange); }
+
+    /* Textarea */
+    .job-textarea {
+      width: 100%;
+      min-height: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .job-textarea:focus { border-color: var(--accent); }
+
+    .char-count {
+      color: var(--muted);
+      font-size: 12px;
+      margin: 6px 0 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Button */
+    .analyze-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #8B7DFF);
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(108, 99, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: opacity 0.2s;
+    }
+
+    .analyze-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: rgba(239, 71, 111, 0.12);
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    /* Sections */
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      margin-top: 48px;
+    }
+
+    .hidden { display: none; }
+
+    /* Score Header */
+    .score-header {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-bottom: 20px;
+    }
+
+    .score-ring {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+
+    .score-ring-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.2rem;
+      font-weight: 800;
+    }
+
+    .score-ring circle.track {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 10;
+    }
+
+    .score-ring circle.progress {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    .badges-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .verdict-badge, .pakwan-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .score-breakdown {
+      color: var(--text);
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .pakwan-reason {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 20px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--gold);
+    }
+
+    .card ul, .card ol { padding-left: 20px; }
+    .card li { margin-bottom: 6px; font-size: 0.92rem; }
+
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .full-width { margin-bottom: 20px; }
+
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .reset-btn {
+      margin-top: 20px;
+      padding: 10px 28px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .reset-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .tab.active { background: var(--accent); color: #fff; }
+
+    .proposal-box {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .proposal-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    .word-count {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--accent);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover { background: var(--card); }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .fade-up { animation: fadeUp 0.4s ease both; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .two-col-grid { grid-template-columns: 1fr; }
+      .score-header { flex-direction: column; align-items: flex-start; }
+      .title { font-size: 1.8rem; }
+      .api-key-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- INPUT SECTION -->
+    <section id="input-section">
+      <span class="badge">MOLONGSKI METHOD</span>
+      <h1 class="title">Proposal Generator</h1>
+      <p class="subtitle">Paste a job post. Get a KYN score + 3 KISS proposals. No Basta Basta.</p>
+
+      <div class="api-key-section">
+        <label class="api-key-label">Anthropic API Key (stored locally in your browser only)</label>
+        <div class="api-key-row">
+          <input type="password" id="api-key-input" class="api-key-input" placeholder="sk-ant-..." />
+          <button id="api-key-save" class="api-key-save">Save Key</button>
+        </div>
+        <div id="api-key-status" class="api-key-status"></div>
+      </div>
+
+      <textarea id="job-textarea" class="job-textarea" placeholder="Paste the full job post here..."></textarea>
+      <div id="char-count" class="char-count">0 characters</div>
+      <button id="analyze-btn" class="analyze-btn" disabled>Analyze &amp; Generate</button>
+      <div id="error-box" class="error-box hidden"></div>
+    </section>
+
+    <!-- KYN RESULTS -->
+    <section id="kyn-section" class="hidden"></section>
+
+    <!-- PROPOSALS -->
+    <section id="proposals-section" class="hidden"></section>
+  </div>
+
+  <script>
+    const SYSTEM_PROMPT = `You are a senior career strategist trained in the Molongski Method.
+
+CANDIDATE: Judah Rivera. Executive Assistant, Project Manager, Video Editor. Location: Koronadal City, Philippines. Skills: GoHighLevel, ClickUp, Missive, Slack, Asana, video editing, social media management, bookkeeping, WordPress, Meta Ads, email marketing, funnel building, CRM, executive support, SOP writing, Amazon PPC. Portfolio: https://agentxxblue14.github.io/judahrivera.github.io/ Testimonials: https://drive.google.com/file/d/1LoCmRR9_62m_EUeg8JzJBCaHm7HPTDTk/view?usp=sharing https://drive.google.com/file/d/1xWwhMbkOYLW6q2j2DNs6yjVYlZSXkghf/view?usp=sharing
+
+STEP 1 — KYN ANALYSIS: Score 0-100 based on: Payment Verified, Hire Rate (green=50%+), Total Spend (green=$5k+), Proposals Count (green=under 20), Recency (green=within 24hrs), Scope vs Pay alignment, Role clarity, Employer legitimacy. Pakwan Test: fail if vague scope, low budget, suspicious requirements, no payment verification. Verdict: APPLY (70+) / ASK QUESTIONS (50-69) / SKIP (below 50).
+
+STEP 2 — KISS PROPOSALS (only if verdict = APPLY): Write 3 variants: 1. PRIMARY: under 100 words, Upwork-style 2. FORMAL: 3-paragraph cover letter 3. PERSONALITY: same length as primary but warmer and more human
+
+Every proposal anatomy: - HOOK: Lead with client's problem. Never start with Dear Hiring Manager or My name is. - BRIDGE: Connect Judah's experience to their exact problem. No resume dump. - VALUE: 1-2 micro-tips proving expertise before being hired. - CTA: Low-friction next step. - SIGN-OFF: Warm and confident.
+
+Append this to every proposal after the sign-off: --- Testimonials: https://drive.google.com/file/d/1LoCmRR9_62m_EUeg8JzJBCaHm7HPTDTk/view?usp=sharing https://drive.google.com/file/d/1xWwhMbkOYLW6q2j2DNs6yjVYlZSXkghf/view?usp=sharing Portfolio: https://agentxxblue14.github.io/judahrivera.github.io/ ---
+
+RULES: No em dashes. No AI filler. Focus on client problem not Judah bio. Reference specific job post detail. Answer every screening question. Never invent metrics, use [INSERT METRIC] instead.
+
+Return ONLY raw valid JSON, no markdown, no backticks: { "kyn": { "fitScore": 0-100, "scoreBreakdown": "2-3 sentence explanation", "topSignals": ["signal1", "signal2", "signal3"], "pakwanTest": "PASS or FAIL", "pakwanReason": "brief explanation", "keywords": ["up to 10 keywords"], "pitchAngles": ["speed angle", "quality angle", "niche angle"], "verdict": "APPLY or ASK QUESTIONS or SKIP" }, "proposals": { "primary": "full text", "formal": "full text", "personality": "full text" } } If verdict is not APPLY, set proposals to null.`;
+
+    // Elements
+    const apiKeyInput = document.getElementById('api-key-input');
+    const apiKeySave = document.getElementById('api-key-save');
+    const apiKeyStatus = document.getElementById('api-key-status');
+    const textarea = document.getElementById('job-textarea');
+    const charCount = document.getElementById('char-count');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const errorBox = document.getElementById('error-box');
+    const kynSection = document.getElementById('kyn-section');
+    const proposalsSection = document.getElementById('proposals-section');
+
+    let isLoading = false;
+
+    // Load saved API key
+    const savedKey = localStorage.getItem('molongski_api_key');
+    if (savedKey) {
+      apiKeyInput.value = savedKey;
+      apiKeyStatus.textContent = 'Key saved';
+      apiKeyStatus.className = 'api-key-status saved';
+    } else {
+      apiKeyStatus.textContent = 'No key saved. Get one at console.anthropic.com';
+      apiKeyStatus.className = 'api-key-status missing';
+    }
+
+    // Save API key
+    apiKeySave.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        localStorage.setItem('molongski_api_key', key);
+        apiKeyStatus.textContent = 'Key saved';
+        apiKeyStatus.className = 'api-key-status saved';
+        updateButton();
+      }
+    });
+
+    // Textarea
+    textarea.addEventListener('input', () => {
+      charCount.textContent = textarea.value.length + ' characters';
+      updateButton();
+    });
+
+    function updateButton() {
+      analyzeBtn.disabled = !textarea.value.trim() || isLoading || !getApiKey();
+    }
+
+    function getApiKey() {
+      return apiKeyInput.value.trim() || localStorage.getItem('molongski_api_key') || '';
+    }
+
+    // Analyze
+    analyzeBtn.addEventListener('click', async () => {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        showError('Please enter your Anthropic API key first.');
+        return;
+      }
+
+      isLoading = true;
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = '<span class="spinner"></span> Analyzing...';
+      errorBox.classList.add('hidden');
+      kynSection.classList.add('hidden');
+      proposalsSection.classList.add('hidden');
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 2000,
+            system: SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: textarea.value }]
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error?.message || 'API error: ' + res.status);
+        }
+
+        const data = await res.json();
+        let responseText = data.content[0].text;
+
+        // Strip markdown fences
+        responseText = responseText.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+
+        const parsed = JSON.parse(responseText);
+        renderKYN(parsed.kyn);
+
+        if (parsed.proposals) {
+          renderProposals(parsed.proposals);
+        }
+      } catch (err) {
+        showError(err.message || 'Something went wrong.');
+      } finally {
+        isLoading = false;
+        analyzeBtn.innerHTML = 'Analyze &amp; Generate';
+        updateButton();
+      }
+    });
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.remove('hidden');
+    }
+
+    // Render KYN
+    function renderKYN(kyn) {
+      const radius = 54;
+      const circumference = 2 * Math.PI * radius;
+      const offset = circumference - (kyn.fitScore / 100) * circumference;
+      const scoreColor = kyn.fitScore >= 70 ? 'var(--green)' : kyn.fitScore >= 50 ? 'var(--orange)' : 'var(--red)';
+      const verdictColor = kyn.verdict === 'APPLY' ? 'var(--green)' : kyn.verdict === 'ASK QUESTIONS' ? 'var(--orange)' : 'var(--red)';
+      const pakwanColor = kyn.pakwanTest === 'PASS' ? 'var(--green)' : 'var(--red)';
+
+      kynSection.innerHTML = `
+        <h2 class="section-title">KYN Analysis</h2>
+        <div class="score-header">
+          <div class="score-ring">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle class="track" cx="70" cy="70" r="${radius}" />
+              <circle class="progress" cx="70" cy="70" r="${radius}"
+                stroke="${scoreColor}" stroke-dasharray="${circumference}"
+                stroke-dashoffset="${circumference}" transform="rotate(-90 70 70)" />
+            </svg>
+            <div class="score-ring-value" style="color:${scoreColor}">${kyn.fitScore}</div>
+          </div>
+          <div class="badges-col">
+            <span class="verdict-badge" style="background:${verdictColor}">${kyn.verdict}</span>
+            <span class="pakwan-badge" style="background:${pakwanColor}">Pakwan: ${kyn.pakwanTest}</span>
+          </div>
+        </div>
+        <p class="score-breakdown">${kyn.scoreBreakdown}</p>
+        ${kyn.pakwanReason ? `<p class="pakwan-reason">Pakwan reason: ${kyn.pakwanReason}</p>` : ''}
+        <div class="two-col-grid">
+          <div class="card">
+            <h3>Top Signals</h3>
+            <ul>${kyn.topSignals.map(s => `<li>${s}</li>`).join('')}</ul>
+          </div>
+          <div class="card">
+            <h3>Keywords</h3>
+            <div class="pills">${kyn.keywords.map(k => `<span class="pill">${k}</span>`).join('')}</div>
+          </div>
+        </div>
+        <div class="card full-width">
+          <h3>Pitch Angles</h3>
+          <ol>${kyn.pitchAngles.map(a => `<li>${a}</li>`).join('')}</ol>
+        </div>
+        <button class="reset-btn" id="reset-btn">Reset</button>
+      `;
+
+      kynSection.classList.remove('hidden');
+      kynSection.classList.add('fade-up');
+
+      // Animate the ring
+      requestAnimationFrame(() => {
+        const circle = kynSection.querySelector('.progress');
+        if (circle) circle.style.strokeDashoffset = offset;
+      });
+
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        textarea.value = '';
+        charCount.textContent = '0 characters';
+        kynSection.classList.add('hidden');
+        proposalsSection.classList.add('hidden');
+        errorBox.classList.add('hidden');
+        updateButton();
+      });
+    }
+
+    // Render Proposals
+    function renderProposals(proposals) {
+      const tabs = [
+        { key: 'primary', label: 'Primary' },
+        { key: 'formal', label: 'Formal' },
+        { key: 'personality', label: 'Personality' }
+      ];
+
+      proposalsSection.innerHTML = `
+        <h2 class="section-title">KISS Proposals</h2>
+        <div class="tab-bar">
+          ${tabs.map((t, i) => `<button class="tab ${i === 0 ? 'active' : ''}" data-key="${t.key}">${t.label}</button>`).join('')}
+        </div>
+        <div class="proposal-box">
+          <button class="copy-btn" id="copy-btn">Copy</button>
+          <pre class="proposal-text" id="proposal-text">${proposals.primary}</pre>
+          <div class="word-count" id="word-count">${wordCount(proposals.primary)} words</div>
+        </div>
+        <p class="note">Social proof links already included in every variant.</p>
+      `;
+
+      proposalsSection.classList.remove('hidden');
+      proposalsSection.classList.add('fade-up');
+
+      // Tab switching
+      proposalsSection.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          proposalsSection.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const text = proposals[tab.dataset.key];
+          document.getElementById('proposal-text').textContent = text;
+          document.getElementById('word-count').textContent = wordCount(text) + ' words';
+        });
+      });
+
+      // Copy
+      document.getElementById('copy-btn').addEventListener('click', async () => {
+        const text = document.getElementById('proposal-text').textContent;
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    function wordCount(text) {
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+  </script>
+</body>
+</html>
